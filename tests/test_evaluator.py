@@ -1,3 +1,5 @@
+import pytest
+
 from rag_eval import EvaluationCase, evaluate_case, evaluate_dataset
 from rag_eval.report import render_html
 
@@ -31,6 +33,45 @@ def test_irrelevant_first_result_reduces_rank_metrics():
     result = evaluate_case(reordered)
     assert result.reciprocal_rank == 0.5
     assert result.context_precision == 0.5
+
+
+@pytest.mark.parametrize(
+    ("retrieved", "relevant", "precision", "recall", "reciprocal_rank"),
+    [
+        (("Paris France", "Paris France"), ("Paris France",), 1.0, 1.0, 1.0),
+        (("Paris France", "France Paris"), ("Paris France",), 1.0, 1.0, 1.0),
+        (("Berlin Germany", "Paris France", "Paris France"), ("Paris France",),
+         0.5833, 1.0, 0.5),
+        (("Paris France", "Berlin Germany"), ("Paris France", "Rome Italy"),
+         1.0, 0.5, 1.0),
+        ((), ("Paris France",), 0.0, 0.0, 0.0),
+        (("Paris France",), (), 0.0, 0.0, 0.0),
+        ((), (), 0.0, 0.0, 0.0),
+        (("Berlin Germany",), ("Paris France",), 0.0, 0.0, 0.0),
+    ],
+    ids=[
+        "duplicate-relevant-contexts",
+        "distinct-contexts-matching-one-reference",
+        "duplicates-preserve-rank-penalty",
+        "recall-measures-missing-reference-coverage",
+        "no-retrieved-contexts",
+        "no-relevant-contexts",
+        "both-context-lists-empty",
+        "no-relevant-hits",
+    ],
+)
+def test_ranked_context_precision(retrieved, relevant, precision, recall, reciprocal_rank):
+    case = EvaluationCase(
+        id="ranked-contexts",
+        question="What is the capital of France?",
+        answer="Paris.",
+        retrieved_contexts=retrieved,
+        relevant_contexts=relevant,
+    )
+    result = evaluate_case(case)
+    assert result.context_precision == precision
+    assert result.context_recall == recall
+    assert result.reciprocal_rank == reciprocal_rank
 
 
 def test_dataset_report_renders_html():

@@ -82,7 +82,8 @@ def _retrieval_metrics(case: EvaluationCase) -> tuple[float, float, float]:
         if relevant:
             hits += 1
             precisions.append(hits / rank)
-    precision = sum(precisions) / min(len(case.relevant_contexts), len(labels)) if precisions else 0.0
+    # Average over relevant retrieved ranks, since multiple contexts can match one reference.
+    precision = mean(precisions) if precisions else 0.0
 
     found = sum(any(is_relevant(relevant, (item,)) for item in case.retrieved_contexts) for relevant in case.relevant_contexts)
     recall = found / len(case.relevant_contexts)
