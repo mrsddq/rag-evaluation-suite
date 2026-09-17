@@ -4,7 +4,7 @@ An offline, reproducible evaluation toolkit for retrieval-augmented generation. 
 
 ## Metrics
 
-- **Context precision**: average precision of relevant contexts in ranked retrieval
+- **Context precision**: mean precision-at-rank over relevant retrieved contexts
 - **Context recall**: fraction of known relevant contexts retrieved
 - **Reciprocal rank**: inverse rank of the first relevant context
 - **Faithfulness**: fraction of answer claims lexically supported by retrieved context
@@ -12,6 +12,13 @@ An offline, reproducible evaluation toolkit for retrieval-augmented generation. 
 - **Answer correctness**: token F1 against a reference answer
 
 Metrics are deterministic and run without sending evaluation data to an external model.
+
+Context precision averages `relevant contexts seen / rank` at each relevant retrieved
+rank. Each retrieved entry keeps its original rank, including duplicate entries or
+different passages matching the same reference. The average is normalized by the
+number of relevant retrieved entries, so it stays between 0 and 1; it is 0 when
+there are no relevant hits or no reference contexts. Missing reference coverage is
+measured separately by context recall.
 
 ## Run the example
 
