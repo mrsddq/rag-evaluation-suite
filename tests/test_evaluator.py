@@ -79,3 +79,22 @@ def test_dataset_report_renders_html():
     assert report["count"] == 1
     assert "RAG evaluation" in render_html(report)
 
+
+@pytest.mark.parametrize("field,value", [
+    ("retrieved_contexts", "Paris France"),
+    ("relevant_contexts", {"context": "Paris France"}),
+    ("retrieved_contexts", [None]),
+    ("question", None),
+    ("answer", 42),
+    ("reference_answer", []),
+])
+def test_jsonl_rejects_wrong_field_types_with_line_number(tmp_path, field, value):
+    import json
+    from rag_eval.cli import load_jsonl
+
+    row = {"question": "What is the capital?", "answer": "Paris", field: value}
+    path = tmp_path / "cases.jsonl"
+    path.write_text("\n" + json.dumps(row), encoding="utf-8")
+    with pytest.raises(ValueError, match="line 2"):
+        load_jsonl(path)
+

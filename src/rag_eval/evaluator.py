@@ -48,13 +48,23 @@ class EvaluationCase:
 
     @classmethod
     def from_dict(cls, value: dict) -> "EvaluationCase":
+        if not isinstance(value, dict):
+            raise TypeError("Each evaluation case must be an object")
+        for field in ("question", "answer", "reference_answer"):
+            if field in value and not isinstance(value[field], str):
+                raise TypeError(f"{field} must be a string")
+        for field in ("retrieved_contexts", "relevant_contexts"):
+            contexts = value.get(field, [])
+            if (not isinstance(contexts, (list, tuple))
+                    or any(not isinstance(context, str) for context in contexts)):
+                raise TypeError(f"{field} must be an array of strings")
         return cls(
             id=str(value.get("id", "")),
-            question=str(value["question"]),
-            answer=str(value["answer"]),
-            retrieved_contexts=tuple(map(str, value.get("retrieved_contexts", []))),
-            relevant_contexts=tuple(map(str, value.get("relevant_contexts", []))),
-            reference_answer=str(value.get("reference_answer", "")),
+            question=value["question"],
+            answer=value["answer"],
+            retrieved_contexts=tuple(value.get("retrieved_contexts", [])),
+            relevant_contexts=tuple(value.get("relevant_contexts", [])),
+            reference_answer=value.get("reference_answer", ""),
         )
 
 
